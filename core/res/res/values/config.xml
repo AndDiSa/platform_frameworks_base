@@ -2270,4 +2270,8 @@
     <string-array name="config_cell_retries_per_error_code">
     </string-array>
 
+    <!-- Older sensors are not setting event.timestamp correctly.  Setting to
+          true will use SystemClock.elapsedRealtimeNanos() to set timestamp-->
+    <bool name="config_useSystemClockforSensors">false</bool>
+
 </resources>
