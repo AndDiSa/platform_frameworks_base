@@ -57,7 +57,6 @@ public abstract class WindowOrientationListener {
     private String mSensorType;
     private Sensor mSensor;
     private boolean museSystemClockforSensors;
-    private SensorEventListenerImpl mSensorEventListener;
     private OrientationJudge mOrientationJudge;
     private int mCurrentRotation = -1;
 
