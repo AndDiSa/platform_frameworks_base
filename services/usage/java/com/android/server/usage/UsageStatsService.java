@@ -425,6 +425,8 @@ public class UsageStatsService extends SystemService implements
                 }
             }
         }
+        mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_CHECK_IDLE_STATES, checkUserId, 0),
+                mCheckIdleIntervalMillis);
     }
 
     /** Check if it's been a while since last parole and let idle apps do some work */
@@ -617,6 +619,7 @@ public class UsageStatsService extends SystemService implements
                     || event.mEventType == Event.SYSTEM_INTERACTION
                     || event.mEventType == Event.USER_INTERACTION)) {
                 if (previouslyIdle) {
+                    // Slog.d(TAG, "Informing listeners of out-of-idle " + event.mPackage);
                     mHandler.sendMessage(mHandler.obtainMessage(MSG_INFORM_LISTENERS, userId,
                             /* idle = */ 0, event.mPackage));
                     notifyBatteryStats(event.mPackage, userId, false);
@@ -671,6 +674,7 @@ public class UsageStatsService extends SystemService implements
                     timeNow - (idle ? mAppIdleWallclockThresholdMillis : 0) - 5000);
             // Inform listeners if necessary
             if (previouslyIdle != idle) {
+                // Slog.d(TAG, "Informing listeners of out-of-idle " + packageName);
                 mHandler.sendMessage(mHandler.obtainMessage(MSG_INFORM_LISTENERS, userId,
                         /* idle = */ idle ? 1 : 0, packageName));
                 if (!idle) {
