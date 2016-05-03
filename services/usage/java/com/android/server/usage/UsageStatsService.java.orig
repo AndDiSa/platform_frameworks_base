@@ -219,7 +219,11 @@ public class UsageStatsService extends SystemService implements
                     Context.DISPLAY_SERVICE);
             mPowerManager = getContext().getSystemService(PowerManager.class);
 
+<<<<<<< HEAD
+            mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
+=======
             mDisplayManager.registerDisplayListener(mDisplayListener, null);
+>>>>>>> android-6.0.1_r43
             synchronized (this) {
                 updateDisplayLocked();
             }
@@ -425,8 +429,6 @@ public class UsageStatsService extends SystemService implements
                 }
             }
         }
-        mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_CHECK_IDLE_STATES, checkUserId, 0),
-                mCheckIdleIntervalMillis);
     }
 
     /** Check if it's been a while since last parole and let idle apps do some work */
@@ -619,7 +621,6 @@ public class UsageStatsService extends SystemService implements
                     || event.mEventType == Event.SYSTEM_INTERACTION
                     || event.mEventType == Event.USER_INTERACTION)) {
                 if (previouslyIdle) {
-                    // Slog.d(TAG, "Informing listeners of out-of-idle " + event.mPackage);
                     mHandler.sendMessage(mHandler.obtainMessage(MSG_INFORM_LISTENERS, userId,
                             /* idle = */ 0, event.mPackage));
                     notifyBatteryStats(event.mPackage, userId, false);
@@ -674,7 +675,6 @@ public class UsageStatsService extends SystemService implements
                     timeNow - (idle ? mAppIdleWallclockThresholdMillis : 0) - 5000);
             // Inform listeners if necessary
             if (previouslyIdle != idle) {
-                // Slog.d(TAG, "Informing listeners of out-of-idle " + packageName);
                 mHandler.sendMessage(mHandler.obtainMessage(MSG_INFORM_LISTENERS, userId,
                         /* idle = */ idle ? 1 : 0, packageName));
                 if (!idle) {
@@ -813,7 +813,7 @@ public class UsageStatsService extends SystemService implements
                 timeNow = checkAndGetTimeLocked();
             }
             userService = getUserDataAndInitializeIfNeededLocked(userId, timeNow);
-            screenOnTime = getScreenOnTimeLocked(timeNow);
+            screenOnTime = getScreenOnTimeLocked();
         }
         return isAppIdleFiltered(packageName, UserHandle.getAppId(uidForAppId), userId,
                 userService, timeNow, screenOnTime);
@@ -882,7 +882,7 @@ public class UsageStatsService extends SystemService implements
         synchronized (mLock) {
             timeNow = checkAndGetTimeLocked();
             userService = getUserDataAndInitializeIfNeededLocked(userId, timeNow);
-            screenOnTime = getScreenOnTimeLocked(timeNow);
+            screenOnTime = getScreenOnTimeLocked();
         }
 
         List<ApplicationInfo> apps;
@@ -1025,7 +1025,11 @@ public class UsageStatsService extends SystemService implements
                 }
                 idpw.decreaseIndent();
             }
-            pw.println("Screen On Timebase:" + mScreenOnTime);
+            pw.print("Screen On Timebase: ");
+            pw.print(screenOnTime);
+            pw.print(" (");
+            TimeUtils.formatDuration(screenOnTime, pw);
+            pw.println(")");
 
             pw.println();
             pw.println("Settings:");
@@ -1059,8 +1063,8 @@ public class UsageStatsService extends SystemService implements
             pw.println();
             pw.print("mScreenOnTime="); TimeUtils.formatDuration(mScreenOnTime, pw);
             pw.println();
-            pw.print("mScreenOnSystemTimeSnapshot=");
-            TimeUtils.formatDuration(mScreenOnSystemTimeSnapshot, pw);
+            pw.print("mLastScreenOnEventRealtime=");
+            TimeUtils.formatDuration(mLastScreenOnEventRealtime, pw);
             pw.println();
         }
     }
