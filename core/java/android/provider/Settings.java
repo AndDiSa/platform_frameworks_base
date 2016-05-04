@@ -6040,6 +6040,7 @@ public final class Settings {
          * @hide
          */
        public static final String BLUETOOTH_INTEROPERABILITY_LIST = "bluetooth_interoperability_list";
+       /**
          * A Long representing a bitmap of profiles that should be disabled when bluetooth starts.
          * See {@link android.bluetooth.BluetoothProfile}.
          * {@hide}
