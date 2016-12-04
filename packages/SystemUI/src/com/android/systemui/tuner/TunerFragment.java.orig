@@ -59,10 +59,7 @@ public class TunerFragment extends PreferenceFragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        if (getActivity().getActionBar() != null) {
-            getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
-        }
+        getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     @Override
