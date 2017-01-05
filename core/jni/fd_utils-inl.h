@@ -401,7 +401,7 @@ class FileDescriptorTable {
   // Creates a new FileDescriptorTable. This function scans
   // /proc/self/fd for the list of open file descriptors and collects
   // information about them. Returns NULL if an error occurs.
-  static FileDescriptorTable* Create() {
+  static FileDescriptorTable* Create(const std::vector<int>& fds_to_ignore) {
     DIR* d = opendir(kFdPath);
     if (d == NULL) {
       ALOGE("Unable to open directory %s: %s", kFdPath, strerror(errno));
@@ -414,6 +414,10 @@ class FileDescriptorTable {
     while ((e = readdir(d)) != NULL) {
       const int fd = ParseFd(e, dir_fd);
       if (fd == -1) {
+        continue;
+      }
+      if (std::find(fds_to_ignore.begin(), fds_to_ignore.end(), fd) != fds_to_ignore.end()) {
+        ALOGI("Ignoring open file descriptor %d", fd);
         continue;
       }
 
@@ -434,7 +438,7 @@ class FileDescriptorTable {
     return new FileDescriptorTable(open_fd_map);
   }
 
-  bool Restat() {
+  bool Restat(const std::vector<int>& fds_to_ignore) {
     std::set<int> open_fds;
 
     // First get the list of open descriptors.
@@ -449,6 +453,10 @@ class FileDescriptorTable {
     while ((e = readdir(d)) != NULL) {
       const int fd = ParseFd(e, dir_fd);
       if (fd == -1) {
+        continue;
+      }
+      if (std::find(fds_to_ignore.begin(), fds_to_ignore.end(), fd) != fds_to_ignore.end()) {
+        ALOGI("Ignoring open file descriptor %d", fd);
         continue;
       }
 
