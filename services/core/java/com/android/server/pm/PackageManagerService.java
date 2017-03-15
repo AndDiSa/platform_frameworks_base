@@ -423,7 +423,7 @@ public class PackageManagerService extends IPackageManager.Stub {
      * one gets run at the next available charging+idle time.  This final mandatory
      * no-fstrim check kicks in only of the other scheduling criteria is never met.
      */
-    private static final long DEFAULT_MANDATORY_FSTRIM_INTERVAL = 3 * DateUtils.DAY_IN_MILLIS;
+    private static final long DEFAULT_MANDATORY_FSTRIM_INTERVAL = 1 * DateUtils.DAY_IN_MILLIS;
 
     /**
      * Whether verification is enabled by default.
