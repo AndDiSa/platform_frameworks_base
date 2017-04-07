@@ -143,7 +143,7 @@ final class ProcessRecord {
     Bundle instrumentationArguments;// as given to us
     ComponentName instrumentationResultClass;// copy of instrumentationClass
     boolean usingWrapper;       // Set to true when process was launched with a wrapper attached
-    final ArraySet<BroadcastRecord> curReceivers = new ArraySet<BroadcastRecord>();// receivers currently running in the app
+    BroadcastRecord curReceiver;// receiver currently running in the app
     long lastWakeTime;          // How long proc held wake lock at last check
     long lastCpuTime;           // How long proc has run CPU at last check
     long curCpuTime;            // How long proc has run CPU most recently
@@ -427,11 +427,8 @@ final class ProcessRecord {
                 pw.print(prefix); pw.print("  - "); pw.println(conProviders.get(i).toShortString());
             }
         }
-        if (!curReceivers.isEmpty()) {
-            pw.print(prefix); pw.println("Current Receivers:");
-            for (int i=0; i < curReceivers.size(); i++) {
-                pw.print(prefix); pw.print("  - "); pw.println(curReceivers.valueAt(i));
-            }
+        if (curReceiver != null) {
+            pw.print(prefix); pw.print("curReceiver="); pw.println(curReceiver);
         }
         if (receivers.size() > 0) {
             pw.print(prefix); pw.println("Receivers:");

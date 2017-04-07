@@ -723,20 +723,6 @@ public final class BluetoothAdapter {
                 Log.e(TAG, "", e);
             }
             return true;
-
-        } else if (state == BluetoothAdapter.STATE_BLE_ON) {
-            if (DBG) Log.d (TAG, "STATE_BLE_ON");
-            int bleAppCnt = 0;
-            try {
-                bleAppCnt = mManagerService.updateBleAppCount(mToken, false);
-            } catch (RemoteException e) {
-                Log.e(TAG, "", e);
-            }
-            if (bleAppCnt == 0) {
-                // Disable only if there are no other clients
-                notifyUserAction(false);
-            }
-            return true;
         }
 
         if (DBG) Log.d (TAG, "disableBLE(): Already disabled");
@@ -1884,34 +1870,6 @@ public final class BluetoothAdapter {
      * @hide
      */
     public Pair<byte[], byte[]> readOutOfBandData() {
-        if (getState() != STATE_ON) return null;
-        //TODO(BT
-        /*
-        try {
-            byte[] hash;
-            byte[] randomizer;
-
-            byte[] ret = null;
-            mServiceLock.readLock().lock();
-            if (mService != null) mService.readOutOfBandData();
-
-            if (ret  == null || ret.length != 32) return null;
-
-            hash = Arrays.copyOfRange(ret, 0, 16);
-            randomizer = Arrays.copyOfRange(ret, 16, 32);
-
-            if (DBG) {
-                Log.d(TAG, "readOutOfBandData:" + Arrays.toString(hash) +
-                  ":" + Arrays.toString(randomizer));
-            }
-            return new Pair<byte[], byte[]>(hash, randomizer);
-
-        } catch (RemoteException e) {
-            Log.e(TAG, "", e);
-        } finally {
-            mServiceLock.readLock().unlock();
-        }
-        */
         return null;
     }
 
@@ -2147,22 +2105,6 @@ public final class BluetoothAdapter {
      */
     public boolean changeApplicationBluetoothState(boolean on,
                                                    BluetoothStateChangeCallback callback) {
-        if (callback == null) return false;
-
-        //TODO(BT)
-        /*
-        try {
-            mServiceLock.readLock().lock();
-            if (mService != null) {
-                return mService.changeApplicationBluetoothState(on, new
-                    StateChangeCallbackWrapper(callback), new Binder());
-            }
-        } catch (RemoteException e) {
-            Log.e(TAG, "changeBluetoothState", e);
-        } finally {
-            mServiceLock.readLock().unlock();
-        }
-        */
         return false;
     }
 

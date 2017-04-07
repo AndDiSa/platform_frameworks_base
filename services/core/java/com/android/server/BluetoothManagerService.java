@@ -537,9 +537,6 @@ class BluetoothManagerService extends IBluetoothManager.Stub {
         }
     }
 
-    /** Internal death rec list */
-    Map<IBinder, ClientDeathRecipient> mBleApps = new HashMap<IBinder, ClientDeathRecipient>();
-
     @Override
     public boolean isBleScanAlwaysAvailable() {
         if (isAirplaneModeOn() && !mEnable) {

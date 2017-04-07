@@ -268,7 +268,7 @@ public final class BroadcastQueue {
 
         r.receiver = app.thread.asBinder();
         r.curApp = app;
-        app.curReceivers.add(r);
+        app.curReceiver = r;
         app.forceProcessStateUpTo(ActivityManager.PROCESS_STATE_RECEIVER);
         mService.updateLruProcessLocked(app, false, null);
         mService.updateOomAdjLocked();
@@ -296,7 +296,7 @@ public final class BroadcastQueue {
                         "Process cur broadcast " + r + ": NOT STARTED!");
                 r.receiver = null;
                 r.curApp = null;
-                app.curReceivers.remove(r);
+                app.curReceiver = null;
             }
         }
     }
@@ -397,8 +397,8 @@ public final class BroadcastQueue {
         }
         r.receiver = null;
         r.intent.setComponent(null);
-        if (r.curApp != null && r.curApp.curReceivers.contains(r)) {
-            r.curApp.curReceivers.remove(r);
+        if (r.curApp != null && r.curApp.curReceiver == r) {
+            r.curApp.curReceiver = null;
         }
         if (r.curFilter != null) {
             r.curFilter.receiverList.curBroadcast = null;
@@ -651,7 +651,7 @@ public final class BroadcastQueue {
                 // things that directly call the IActivityManager API, which
                 // are already core system stuff so don't matter for this.
                 r.curApp = filter.receiverList.app;
-                filter.receiverList.app.curReceivers.add(r);
+                filter.receiverList.app.curReceiver = r;
                 mService.updateOomAdjLocked(r.curApp);
             }
         }
@@ -679,7 +679,7 @@ public final class BroadcastQueue {
                 r.curFilter = null;
                 filter.receiverList.curBroadcast = null;
                 if (filter.receiverList.app != null) {
-                    filter.receiverList.app.curReceivers.remove(r);
+                    filter.receiverList.app.curReceiver = null;
                 }
             }
         }
