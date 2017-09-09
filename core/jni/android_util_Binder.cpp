@@ -132,6 +132,14 @@ static struct strict_mode_callback_offsets_t
     jmethodID mCallback;
 } gStrictModeCallbackOffsets;
 
+static struct thread_dispatch_offsets_t
+{
+    // Class state.
+    jclass mClass;
+    jmethodID mDispatchUncaughtException;
+    jmethodID mCurrentThread;
+} gThreadDispatchOffsets;
+
 // ****************************************************************************
 // ****************************************************************************
 // ****************************************************************************
@@ -165,6 +173,23 @@ static JNIEnv* javavm_to_jnienv(JavaVM* vm)
     return vm->GetEnv((void **)&env, JNI_VERSION_1_4) >= 0 ? env : NULL;
 }
 
+// Report a java.lang.Error (or subclass). This may terminate the runtime.
+static void report_java_lang_error(JNIEnv* env, jthrowable error)
+{
+    // Try to run the uncaught exception machinery.
+    jobject thread = env->CallStaticObjectMethod(gThreadDispatchOffsets.mClass,
+            gThreadDispatchOffsets.mCurrentThread);
+    if (thread != nullptr) {
+        env->CallVoidMethod(thread, gThreadDispatchOffsets.mDispatchUncaughtException,
+                error);
+        // Should not return here, unless more errors occured.
+    }
+    // Some error occurred that meant that either dispatchUncaughtException could not be
+    // called or that it had an error itself (as this should be unreachable under normal
+    // conditions). Clear the exception.
+    env->ExceptionClear();
+}
+
 static void report_exception(JNIEnv* env, jthrowable excep, const char* msg)
 {
     env->ExceptionClear();
@@ -191,6 +216,10 @@ static void report_exception(JNIEnv* env, jthrowable excep, const char* msg)
     }
 
     if (env->IsInstanceOf(excep, gErrorOffsets.mClass)) {
+        // Try to report the error. This should not return under normal circumstances.
+        report_java_lang_error(env, excep);
+        // The traditional handling: re-raise and abort.
+
         /*
          * It's an Error: Reraise the exception, detach this thread, and
          * wait for the fireworks. Die even more blatantly after a minute
@@ -1317,6 +1346,13 @@ int register_android_os_Binder(JNIEnv* env)
     gStrictModeCallbackOffsets.mClass = MakeGlobalRefOrDie(env, clazz);
     gStrictModeCallbackOffsets.mCallback = GetStaticMethodIDOrDie(env, clazz,
             "onBinderStrictModePolicyChange", "(I)V");
+
+    clazz = FindClassOrDie(env, "java/lang/Thread");
+    gThreadDispatchOffsets.mClass = MakeGlobalRefOrDie(env, clazz);
+    gThreadDispatchOffsets.mDispatchUncaughtException = GetMethodIDOrDie(env, clazz,
+            "dispatchUncaughtException", "(Ljava/lang/Throwable;)V");
+    gThreadDispatchOffsets.mCurrentThread = GetStaticMethodIDOrDie(env, clazz, "currentThread",
+            "()Ljava/lang/Thread;");
 
     return 0;
 }
