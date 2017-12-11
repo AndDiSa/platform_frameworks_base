@@ -5577,6 +5577,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mCameraLensCoverState = lensCoverState;
     }
 
+    /** {@inheritDoc} */
+    public void notifyRotateLockSwitchChanged(long whenNanos, boolean isLocked) {
+        try {
+            if (isLocked)
+                mWindowManager.freezeRotation(-1);
+            else
+                mWindowManager.thawRotation();
+        } catch (RemoteException e) {
+            // Ignore
+        }
+    }
+
     void setHdmiPlugged(boolean plugged) {
         if (mHdmiPlugged != plugged) {
             mHdmiPlugged = plugged;

@@ -1100,6 +1100,13 @@ public interface WindowManagerPolicy {
     public void notifyCameraLensCoverSwitchChanged(long whenNanos, boolean lensCovered);
 
     /**
+     * Tell the policy that the rotation lock switch has changed state.
+     * @param whenNanos The time when the change occurred in uptime nanoseconds.
+     * @param isLocked True if the rotation is now locked.
+     */
+    public void notifyRotateLockSwitchChanged(long whenNanos, boolean isLocked);
+
+    /**
      * Tell the policy if anyone is requesting that keyguard not come on.
      *
      * @param enabled Whether keyguard can be on or not.  does not actually

@@ -392,6 +392,12 @@ final class InputMonitor implements InputManagerService.WindowManagerCallbacks {
         mService.mPolicy.notifyCameraLensCoverSwitchChanged(whenNanos, lensCovered);
     }
 
+    /* Notifies that the rotation lock switch changed state. */
+    @Override
+    public void notifyRotateLockSwitchChanged(long whenNanos, boolean isLocked) {
+        mService.mPolicy.notifyRotateLockSwitchChanged(whenNanos, isLocked);
+    }
+
     /* Provides an opportunity for the window manager policy to intercept early key
      * processing as soon as the key has been read from the device. */
     @Override
