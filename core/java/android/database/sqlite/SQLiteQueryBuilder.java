@@ -400,7 +400,7 @@ public class SQLiteQueryBuilder
             db.validateSql(unwrappedSql, cancellationSignal); // will throw if query is invalid
 
             // Execute wrapped query for extra protection
-            final String wrappedSql = buildQuery(projectionIn, wrap(selection), groupBy,
+            final String wrappedSql = buildQuery(projectionIn, "(" + selection + ")", groupBy,
                     having, sortOrder, limit);
             sql = wrappedSql;
         } else {
@@ -408,7 +408,6 @@ public class SQLiteQueryBuilder
             sql = unwrappedSql;
         }
 
-        final String[] sqlArgs = selectionArgs;
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             if (Build.IS_DEBUGGABLE) {
                 Log.d(TAG, sql + " with args " + Arrays.toString(sqlArgs));
