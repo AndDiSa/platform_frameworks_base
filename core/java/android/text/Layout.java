@@ -901,60 +901,6 @@ public abstract class Layout {
 
     /**
      * Computes in linear time the results of calling
-     * #getHorizontal for all offsets on a line.
-     * @param line The line giving the offsets we compute information for
-     * @param clamped Whether to clamp the results to the width of the layout
-     * @param primary Whether the results should be the primary or the secondary horizontal
-     * @return The array of results, indexed from 0, where 0 corresponds to the line start offset
-     */
-    private float[] getLineHorizontals(int line, boolean clamped, boolean primary) {
-        int start = getLineStart(line);
-        int end = getLineEnd(line);
-        int dir = getParagraphDirection(line);
-        boolean hasTab = getLineContainsTab(line);
-        Directions directions = getLineDirections(line);
-
-        TabStops tabStops = null;
-        if (hasTab && mText instanceof Spanned) {
-            // Just checking this line should be good enough, tabs should be
-            // consistent across all lines in a paragraph.
-            TabStopSpan[] tabs = getParagraphSpans((Spanned) mText, start, end, TabStopSpan.class);
-            if (tabs.length > 0) {
-                tabStops = new TabStops(TAB_INCREMENT, tabs); // XXX should reuse
-            }
-        }
-
-        TextLine tl = TextLine.obtain();
-        tl.set(mPaint, mText, start, end, dir, directions, hasTab, tabStops);
-        boolean[] trailings = primaryIsTrailingPreviousAllLineOffsets(line);
-        if (!primary) {
-            for (int offset = 0; offset < trailings.length; ++offset) {
-                trailings[offset] = !trailings[offset];
-            }
-        }
-        float[] wid = tl.measureAllOffsets(trailings, null);
-        TextLine.recycle(tl);
-
-        if (clamped) {
-            for (int offset = 0; offset <= wid.length; ++offset) {
-                if (wid[offset] > mWidth) {
-                    wid[offset] = mWidth;
-                }
-            }
-        }
-        int left = getParagraphLeft(line);
-        int right = getParagraphRight(line);
-
-        int lineStartPos = getLineStartPos(line, left, right);
-        float[] horizontal = new float[end - start + 1];
-        for (int offset = 0; offset < horizontal.length; ++offset) {
-            horizontal[offset] = lineStartPos + wid[offset];
-        }
-        return horizontal;
-    }
-
-    /**
-     * Computes in linear time the results of calling
      * #primaryIsTrailingPrevious for all offsets on a line.
      * @param line The line giving the offsets we compute the information for
      * @return The array of results, indexed from 0, where 0 corresponds to the line start offset
@@ -1065,6 +1011,60 @@ public abstract class Layout {
         int right = getParagraphRight(line);
 
         return getLineStartPos(line, left, right) + wid;
+    }
+
+    /**
+     * Computes in linear time the results of calling
+     * #getHorizontal for all offsets on a line.
+     * @param line The line giving the offsets we compute information for
+     * @param clamped Whether to clamp the results to the width of the layout
+     * @param primary Whether the results should be the primary or the secondary horizontal
+     * @return The array of results, indexed from 0, where 0 corresponds to the line start offset
+     */
+    private float[] getLineHorizontals(int line, boolean clamped, boolean primary) {
+        int start = getLineStart(line);
+        int end = getLineEnd(line);
+        int dir = getParagraphDirection(line);
+        boolean hasTab = getLineContainsTab(line);
+        Directions directions = getLineDirections(line);
+
+        TabStops tabStops = null;
+        if (hasTab && mText instanceof Spanned) {
+            // Just checking this line should be good enough, tabs should be
+            // consistent across all lines in a paragraph.
+            TabStopSpan[] tabs = getParagraphSpans((Spanned) mText, start, end, TabStopSpan.class);
+            if (tabs.length > 0) {
+                tabStops = new TabStops(TAB_INCREMENT, tabs); // XXX should reuse
+            }
+        }
+
+        TextLine tl = TextLine.obtain();
+        tl.set(mPaint, mText, start, end, dir, directions, hasTab, tabStops);
+        boolean[] trailings = primaryIsTrailingPreviousAllLineOffsets(line);
+        if (!primary) {
+            for (int offset = 0; offset < trailings.length; ++offset) {
+                trailings[offset] = !trailings[offset];
+            }
+        }
+        float[] wid = tl.measureAllOffsets(trailings, null);
+        TextLine.recycle(tl);
+
+        if (clamped) {
+            for (int offset = 0; offset <= wid.length; ++offset) {
+                if (wid[offset] > mWidth) {
+                    wid[offset] = mWidth;
+                }
+            }
+        }
+        int left = getParagraphLeft(line);
+        int right = getParagraphRight(line);
+
+        int lineStartPos = getLineStartPos(line, left, right);
+        float[] horizontal = new float[end - start + 1];
+        for (int offset = 0; offset < horizontal.length; ++offset) {
+            horizontal[offset] = lineStartPos + wid[offset];
+        }
+        return horizontal;
     }
 
     /**
@@ -1282,6 +1282,8 @@ public abstract class Layout {
         // XXX: we don't care about tabs as we just use TextLine#getOffsetToLeftRightOf here.
         tl.set(mPaint, mText, lineStartOffset, lineEndOffset, getParagraphDirection(line), dirs,
                 false, null);
+        final HorizontalMeasurementProvider horizontal =
+                new HorizontalMeasurementProvider(line, primary);
 
         final int max;
         if (line == getLineCount() - 1) {
@@ -1291,9 +1293,7 @@ public abstract class Layout {
                     !isRtlCharAt(lineEndOffset - 1)) + lineStartOffset;
         }
         int best = lineStartOffset;
-	final HorizontalMeasurementProvider horizontal =
-              new HorizontalMeasurementProvider(line);
-	float bestdist = Math.abs(horizontal.get(best) - horiz);
+        float bestdist = Math.abs(horizontal.get(lineStartOffset) - horiz);
 
         for (int i = 0; i < dirs.mDirections.length; i += 2) {
             int here = lineStartOffset + dirs.mDirections[i];
@@ -1368,12 +1368,14 @@ public abstract class Layout {
      */
     private class HorizontalMeasurementProvider {
         private final int mLine;
+        private final boolean mPrimary;
 
         private float[] mHorizontals;
         private int mLineStartOffset;
 
-        HorizontalMeasurementProvider(final int line) {
+        HorizontalMeasurementProvider(final int line, final boolean primary) {
             mLine = line;
+            mPrimary = primary;
             init();
         }
 
@@ -1383,14 +1385,14 @@ public abstract class Layout {
                 return;
             }
 
-            mHorizontals = getLineHorizontals(mLine, false, true);
+            mHorizontals = getLineHorizontals(mLine, false, mPrimary);
             mLineStartOffset = getLineStart(mLine);
         }
 
         float get(final int offset) {
             if (mHorizontals == null || offset < mLineStartOffset
                     || offset >= mLineStartOffset + mHorizontals.length) {
-                return getPrimaryHorizontal(offset);
+                return getHorizontal(offset, mPrimary);
             } else {
                 return mHorizontals[offset - mLineStartOffset];
             }

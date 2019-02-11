@@ -2750,6 +2750,7 @@
   <java-symbol type="drawable" name="lockscreen_notselected" />
   <java-symbol type="drawable" name="lockscreen_selected" />
 
+  <java-symbol type="bool" name="config_useSystemClockforRotationSensor" />
   <!-- Whether to enable HumanInteractionController by default -->
   <java-symbol type="bool" name="config_HICEnabledDefault" />
 </resources>
