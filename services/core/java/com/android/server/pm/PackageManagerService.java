@@ -15686,6 +15686,12 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     @Override
     public boolean isPackageDeviceAdminOnAnyUser(String packageName) {
+        if (checkUidPermission(android.Manifest.permission.MANAGE_USERS, callingUid)
+                != PERMISSION_GRANTED) {
+            EventLog.writeEvent(0x534e4554, "128599183", -1, "");
+            throw new SecurityException(android.Manifest.permission.MANAGE_USERS
+                    + " permission is required to call this API");
+        }
         return isPackageDeviceAdmin(packageName, UserHandle.USER_ALL);
     }
 
