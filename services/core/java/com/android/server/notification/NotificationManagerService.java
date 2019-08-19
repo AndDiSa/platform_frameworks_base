@@ -599,7 +599,7 @@ public class NotificationManagerService extends SystemService {
             try {
                 ActivityManagerNative.getDefault().crashApplication(uid, initialPid, pkg,
                         "Bad notification posted from package " + pkg
-                        + ": " + message);
+                        + ": " + message, true /*force*/);
             } catch (RemoteException e) {
             }
             Binder.restoreCallingIdentity(ident);
