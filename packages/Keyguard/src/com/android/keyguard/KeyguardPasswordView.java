@@ -80,7 +80,7 @@ public class KeyguardPasswordView extends KeyguardAbsKeyInputView
     @Override
     protected void resetState() {
         mPasswordEntry.setRestrictedAcrossUser(true);
-        mSecurityMessageDisplay.setMessage(getMessageWithCount(R.string.kg_password_instructions), false);
+	mSecurityMessageDisplay.setMessage(R.string.kg_password_instructions, false);
         final boolean wasDisabled = mPasswordEntry.isEnabled();
         setPasswordEntryEnabled(true);
         setPasswordEntryInputEnabled(true);
