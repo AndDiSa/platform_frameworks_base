@@ -192,6 +192,9 @@ final class Settings {
     private static final String TAG_DEFAULT_DIALER = "default-dialer";
     private static final String TAG_VERSION = "version";
 
+    private static final String TAG_PROTECTED_COMPONENTS = "protected-components";
+    private static final String TAG_VISIBLE_COMPONENTS = "visible-components";
+
     private static final String ATTR_NAME = "name";
     private static final String ATTR_USER = "user";
     private static final String ATTR_CODE = "code";
@@ -1328,7 +1331,6 @@ final class Settings {
         if (alsoResetStatus) {
             ps.clearDomainVerificationStatusForUser(userId);
         }
-        ps.setIntentFilterVerificationInfo(null);
         return true;
     }
 

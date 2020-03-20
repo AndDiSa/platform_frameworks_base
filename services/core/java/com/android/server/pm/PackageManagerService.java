@@ -15422,126 +15422,69 @@ public class PackageManagerService extends IPackageManager.Stub {
         int count = 0;
         final String packageName = pkg.packageName;
 
-        boolean handlesWebUris = false;
-        ArraySet<String> domains = new ArraySet<>();
-        final boolean previouslyVerified;
-        boolean hostSetExpanded = false;
-        boolean needToRunVerify = false;
         synchronized (mPackages) {
             // If this is a new install and we see that we've already run verification for this
             // package, we have nothing to do: it means the state was restored from backup.
-            IntentFilterVerificationInfo ivi =
-                    mSettings.getIntentFilterVerificationLPr(packageName);
-            previouslyVerified = (ivi != null);
-            if (!replacing && previouslyVerified) {
-                if (DEBUG_DOMAIN_VERIFICATION) {
-                    Slog.i(TAG, "Package " + packageName + " already verified: status="
-                            + ivi.getStatusString());
+            if (!replacing) {
+                IntentFilterVerificationInfo ivi =
+                        mSettings.getIntentFilterVerificationLPr(packageName);
+                if (ivi != null) {
+                    if (DEBUG_DOMAIN_VERIFICATION) {
+                        Slog.i(TAG, "Package " + packageName+ " already verified: status="
+                                + ivi.getStatusString());
+                    }
+                    return;
                 }
-                return;
             }
 
-            if (DEBUG_DOMAIN_VERIFICATION) {
-                Slog.i(TAG, "    Previous verified hosts: "
-                        + (ivi == null ? "[none]" : ivi.getDomainsString()));
-
-            // If any filters need to be verified, then all need to be.  In addition, we need to
-            // know whether an updating app has any web navigation intent filters, to re-
-            // examine handling policy even if not re-verifying.
-            final boolean needsVerification = needsNetworkVerificationLPr(packageName);
+            // If any filters need to be verified, then all need to be.
+            boolean needToVerify = false;
             for (PackageParser.Activity a : pkg.activities) {
                 for (ActivityIntentInfo filter : a.intents) {
-                    if (filter.handlesWebUris(true)) {
-                        handlesWebUris = true;
-                    }
-                    if (needsVerification && filter.needsVerification()) {
+                    if (filter.needsVerification() && needsNetworkVerificationLPr(filter)) {
                         if (DEBUG_DOMAIN_VERIFICATION) {
-                            Slog.d(TAG, "autoVerify requested, processing all filters");
+                            Slog.d(TAG, "Intent filter needs verification, so processing all filters");
                         }
-                        needToRunVerify = true;
-                        // It's safe to break out here because filter.needsVerification()
-                        // can only be true if filter.handlesWebUris(true) returned true, so
-                        // we've already noted that.
+                        needToVerify = true;
                         break;
                     }
                 }
             }
 
-            // Compare the new set of recognized hosts if the app is either requesting
-            // autoVerify or has previously used autoVerify but no longer does.
-            if (needToRunVerify || previouslyVerified) {
+            if (needToVerify) {
                 final int verificationId = mIntentFilterVerificationToken++;
                 for (PackageParser.Activity a : pkg.activities) {
                     for (ActivityIntentInfo filter : a.intents) {
                         // Run verification against hosts mentioned in any web-nav intent filter,
                         // even if the filter matches non-web schemes as well
-                        if (filter.handlesWebUris(false /*onlyWebSchemes*/)) {
+                        if (filter.handlesWebUris(false) && needsNetworkVerificationLPr(filter)) {
                             if (DEBUG_DOMAIN_VERIFICATION) Slog.d(TAG,
                                     "Verification needed for IntentFilter:" + filter.toString());
                             mIntentFilterVerifier.addOneIntentFilterVerification(
                                     verifierUid, userId, verificationId, filter, packageName);
-                            domains.addAll(filter.getHostsList());
                             count++;
                         }
                     }
                 }
             }
-
-            if (DEBUG_DOMAIN_VERIFICATION) {
-                Slog.i(TAG, "    Update published hosts: " + domains.toString());
-            }
-
-            // If we've previously verified this same host set (or a subset), we can trust that
-            // a current ALWAYS policy is still applicable.  If this is the case, we're done.
-            // (If we aren't in ALWAYS, we want to reverify to allow for apps that had failing
-            // hosts in their intent filters, then pushed a new apk that removed them and now
-            // passes.)
-            //
-            // Cases:
-            //   + still autoVerify (needToRunVerify):
-            //      - preserve current state if all of: unexpanded, in always
-            //      - otherwise rerun as usual (fall through)
-            //   + no longer autoVerify (alreadyVerified && !needToRunVerify)
-            //      - wipe verification history always
-            //      - preserve current state if all of: unexpanded, in always
-            hostSetExpanded = !previouslyVerified
-                    || (ivi != null && !ivi.getDomains().containsAll(domains));
-            final int currentPolicy =
-                    mSettings.getIntentFilterVerificationStatusLPr(packageName, userId);
-            final boolean keepCurState = !hostSetExpanded
-                    && currentPolicy == INTENT_FILTER_DOMAIN_VERIFICATION_STATUS_ALWAYS;
-
-            if (needToRunVerify && keepCurState) {
-                if (DEBUG_DOMAIN_VERIFICATION) {
-                    Slog.i(TAG, "Host set not expanding + ALWAYS -> no need to reverify");
-                }
-		ArrayList<String> domainsList = new ArrayList<String>();
-		domainsList.addAll(domains);
-                ivi.setDomains(domainsList);
-                scheduleWriteSettingsLocked();
-                return;
-            } else if (previouslyVerified && !needToRunVerify) {
-                // Prior autoVerify state but not requesting it now.  Clear autoVerify history,
-                // and preserve the always policy iff the host set is not expanding.
-                clearIntentFilterVerificationsLPw(packageName, userId, !keepCurState);
-                return;
-            }
         }
 
-        if (needToRunVerify && count > 0) {
-            // app requested autoVerify and has at least one matching intent filter
+        if (count > 0) {
             if (DEBUG_DOMAIN_VERIFICATION) Slog.d(TAG, "Starting " + count
                     + " IntentFilter verification" + (count > 1 ? "s" : "")
                     +  " for userId:" + userId);
             mIntentFilterVerifier.startVerifications(userId);
         } else {
             if (DEBUG_DOMAIN_VERIFICATION) {
-                Slog.d(TAG, "No web filters or no new host policy for " + packageName);
+                Slog.d(TAG, "No filters or not all autoVerify for " + packageName);
             }
         }
     }
 
-    private boolean needsNetworkVerificationLPr(String packageName) {
+    private boolean needsNetworkVerificationLPr(ActivityIntentInfo filter) {
+        final ComponentName cn  = filter.activity.getComponentName();
+        final String packageName = cn.getPackageName();
+
         IntentFilterVerificationInfo ivi = mSettings.getIntentFilterVerificationLPr(
                 packageName);
         if (ivi == null) {
@@ -15550,7 +15493,6 @@ public class PackageManagerService extends IPackageManager.Stub {
         int status = ivi.getStatus();
         switch (status) {
             case INTENT_FILTER_DOMAIN_VERIFICATION_STATUS_UNDEFINED:
-            case INTENT_FILTER_DOMAIN_VERIFICATION_STATUS_ALWAYS:
             case INTENT_FILTER_DOMAIN_VERIFICATION_STATUS_ASK:
                 return true;
 
