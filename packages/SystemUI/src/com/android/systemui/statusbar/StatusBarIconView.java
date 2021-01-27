@@ -198,25 +198,25 @@ public class StatusBarIconView extends AnimatedImageView {
         if (mIcon == null) {
             return false;
         }
-        Drawable drawable = getIcon(mIcon);
+        Drawable drawable;
+        try {
+            drawable = getIcon(mIcon);
+        } catch (OutOfMemoryError e) {
+            Log.w(TAG, "OOM while inflating " + mIcon.icon + " for slot " + mSlot);
+            return false;
+        }
+
         if (drawable == null) {
-            Log.w(TAG, "No icon for slot " + mSlot);
+            Log.w(TAG, "No icon for slot " + mSlot + "; " + mIcon.icon);
             return false;
         }
-        if (drawable instanceof BitmapDrawable && ((BitmapDrawable) drawable).getBitmap() != null) {
-            // If it's a bitmap we can check the size directly
-            int byteCount = ((BitmapDrawable) drawable).getBitmap().getByteCount();
-            if (byteCount > MAX_BITMAP_SIZE) {
-                Log.w(TAG, "Drawable is too large (" + byteCount + " bytes) " + mIcon);
-                return false;
-            }
-        } else if (drawable.getIntrinsicWidth() > MAX_IMAGE_SIZE
+
+        if (drawable.getIntrinsicWidth() > MAX_IMAGE_SIZE
                 || drawable.getIntrinsicHeight() > MAX_IMAGE_SIZE) {
-            // Otherwise, check dimensions
-            Log.w(TAG, "Drawable is too large (" + drawable.getIntrinsicWidth() + "x"
-                    + drawable.getIntrinsicHeight() + ") " + mIcon);
+            Log.w(TAG, "Drawable is too large " + mIcon);
             return false;
         }
+
 
         if (withClear) {
             setImageDrawable(null);
