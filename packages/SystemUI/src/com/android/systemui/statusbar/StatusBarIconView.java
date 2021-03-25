@@ -24,6 +24,7 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.os.Parcelable;
@@ -41,6 +42,15 @@ import com.android.systemui.R;
 import java.text.NumberFormat;
 
 public class StatusBarIconView extends AnimatedImageView {
+    /**
+     * Maximum allowed byte count for an icon bitmap
+     * @see android.graphics.RecordingCanvas.MAX_BITMAP_SIZE
+     */
+    private static final int MAX_BITMAP_SIZE = 100 * 1024 * 1024; // 100 MB
+    /**
+     * Maximum allowed width or height for an icon drawable, if we can't get byte count
+     */
+    private static final int MAX_IMAGE_SIZE = 5000;
     private static final String TAG = "StatusBarIconView";
     private boolean mAlwaysScaleIcon;
 
@@ -193,6 +203,21 @@ public class StatusBarIconView extends AnimatedImageView {
             Log.w(TAG, "No icon for slot " + mSlot);
             return false;
         }
+        if (drawable instanceof BitmapDrawable && ((BitmapDrawable) drawable).getBitmap() != null) {
+            // If it's a bitmap we can check the size directly
+            int byteCount = ((BitmapDrawable) drawable).getBitmap().getByteCount();
+            if (byteCount > MAX_BITMAP_SIZE) {
+                Log.w(TAG, "Drawable is too large (" + byteCount + " bytes) " + mIcon);
+                return false;
+            }
+        } else if (drawable.getIntrinsicWidth() > MAX_IMAGE_SIZE
+                || drawable.getIntrinsicHeight() > MAX_IMAGE_SIZE) {
+            // Otherwise, check dimensions
+            Log.w(TAG, "Drawable is too large (" + drawable.getIntrinsicWidth() + "x"
+                    + drawable.getIntrinsicHeight() + ") " + mIcon);
+            return false;
+        }
+
         if (withClear) {
             setImageDrawable(null);
         }
