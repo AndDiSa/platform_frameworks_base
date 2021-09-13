@@ -54,6 +54,7 @@ import android.app.AutomaticZenRule;
 import android.app.IActivityManager;
 import android.app.INotificationManager;
 import android.app.ITransientNotification;
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.NotificationManager.Policy;
@@ -265,6 +266,9 @@ public class NotificationManagerService extends SystemService {
     private boolean mScreenOn = true;
     private boolean mInCall = false;
     private boolean mNotificationPulseEnabled;
+
+    // for checking lockscreen status
+    private KeyguardManager mKeyguardManager;
 
     // used as a mutex for access to all active notifications & listeners
     final ArrayList<NotificationRecord> mNotificationList =
@@ -670,8 +674,10 @@ public class NotificationManagerService extends SystemService {
 
     private void clearLightsLocked() {
         // light
-        mLights.clear();
-        updateLightsLocked();
+	if (mKeyguardManager != null && !mKeyguardManager.isKeyguardLocked()) {
+        	mLights.clear();
+        	updateLightsLocked();
+	}
     }
 
     private final BroadcastReceiver mPackageIntentReceiver = new BroadcastReceiver() {
@@ -931,6 +937,8 @@ public class NotificationManagerService extends SystemService {
         mAppOps = (AppOpsManager) getContext().getSystemService(Context.APP_OPS_SERVICE);
         mVibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
         mAppUsageStats = LocalServices.getService(UsageStatsManagerInternal.class);
+        mKeyguardManager =
+                (KeyguardManager) getContext().getSystemService(Context.KEYGUARD_SERVICE);
 
         // This is the package that contains the AOSP framework update.
         mRankerServicePackageName = getContext().getPackageManager()
