@@ -28,6 +28,7 @@ import android.widget.LinearLayout;
 
 import com.android.internal.widget.LockPatternChecker;
 import com.android.internal.widget.LockPatternUtils;
+import com.android.keyguard.KeyguardSecurityModel.SecurityMode;
 
 /**
  * Base class for PIN and password unlock screens.
@@ -87,6 +88,7 @@ public abstract class KeyguardAbsKeyInputView extends LinearLayout
 
     protected abstract int getPasswordTextViewId();
     protected abstract void resetState();
+    protected abstract SecurityMode getSecurityMode();
 
     @Override
     protected void onFinishInflate() {
@@ -163,7 +165,7 @@ public abstract class KeyguardAbsKeyInputView extends LinearLayout
             mCallback.reportUnlockAttempt(userId, true, 0);
             if (dismissKeyguard) {
                 mDismissing = true;
-                mCallback.dismiss(true);
+                mCallback.dismiss(true, getSecurityMode());
             }
         } else {
             if (isValidPassword) {

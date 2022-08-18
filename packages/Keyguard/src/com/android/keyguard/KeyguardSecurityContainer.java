@@ -51,7 +51,7 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
 
     // Used to notify the container when something interesting happens.
     public interface SecurityCallback {
-        public boolean dismiss(boolean authenticated);
+        public boolean dismiss(boolean authenticated, SecurityMode expectedSecurityMode);
         public void userActivity();
         public void onSecurityModeChanged(SecurityMode securityMode, boolean needsInput);
 
@@ -307,10 +307,20 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
     /**
      * Shows the next security screen if there is one.
      * @param authenticated true if the user entered the correct authentication
+     * @param expectedSecurityMode SecurityMode that is invoking this request. SecurityMode.Invalid
+     *      indicates that no check should be done
      * @return true if keyguard is done
      */
-    boolean showNextSecurityScreenOrFinish(boolean authenticated) {
+    boolean showNextSecurityScreenOrFinish(boolean authenticated,
+            SecurityMode expectedSecurityMode) {
         if (DEBUG) Log.d(TAG, "showNextSecurityScreenOrFinish(" + authenticated + ")");
+        if (expectedSecurityMode != SecurityMode.Invalid
+                && expectedSecurityMode != getCurrentSecurityMode()) {
+            Log.w(TAG, "Attempted to invoke showNextSecurityScreenOrFinish with securityMode "
+                    + expectedSecurityMode + ", but current mode is " + getCurrentSecurityMode());
+            return false;
+        }
+
         boolean finish = false;
         boolean strongAuth = false;
         if (mUpdateMonitor.getUserCanSkipBouncer(
@@ -414,8 +424,13 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
             }
         }
 
-        public void dismiss(boolean authenticated) {
-            mSecurityCallback.dismiss(authenticated);
+        /**
+         * Potentially dismiss the current security screen, after validating that all device
+         * security has been unlocked. Otherwise show the next screen.
+         */
+        public void dismiss(boolean authenticated,
+                SecurityMode expectedSecurityMode) {
+            mSecurityCallback.dismiss(authenticated, expectedSecurityMode);
         }
 
         public boolean isVerifyUnlockOnly() {
@@ -448,7 +463,8 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
         @Override
         public boolean isVerifyUnlockOnly() { return false; }
         @Override
-        public void dismiss(boolean securityVerified) { }
+        public void dismiss(boolean securityVerified,
+                SecurityMode expectedSecurityMode) { }
         @Override
         public void reset() {}
     };
@@ -493,8 +509,9 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
         return mCurrentSecuritySelection;
     }
 
-    public void dismiss(boolean authenticated) {
-        mCallback.dismiss(authenticated);
+    public void dismiss(boolean authenticated,
+            SecurityMode expectedSecurityMode) {
+        mCallback.dismiss(authenticated, expectedSecurityMode);
     }
 
     public boolean needsInput() {

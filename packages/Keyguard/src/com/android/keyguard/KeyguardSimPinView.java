@@ -20,6 +20,7 @@ import com.android.internal.telephony.ITelephony;
 import com.android.internal.telephony.IccCardConstants;
 import com.android.internal.telephony.IccCardConstants.State;
 import com.android.internal.telephony.PhoneConstants;
+import com.android.keyguard.KeyguardSecurityModel.SecurityMode;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -275,7 +276,7 @@ public class KeyguardSimPinView extends KeyguardPinBasedInputView {
                             if (result == PhoneConstants.PIN_RESULT_SUCCESS) {
                                 KeyguardUpdateMonitor.getInstance(getContext())
                                         .reportSimUnlocked(mSubId);
-                                mCallback.dismiss(true);
+                                mCallback.dismiss(true, SecurityMode.SimPin);
                             } else {
                                 if (result == PhoneConstants.PIN_PASSWORD_INCORRECT) {
                                     if (attemptsRemaining <= 2) {
@@ -314,6 +315,11 @@ public class KeyguardSimPinView extends KeyguardPinBasedInputView {
     @Override
     public boolean startDisappearAnimation(Runnable finishRunnable) {
         return false;
+    }
+
+    @Override
+    public SecurityMode getSecurityMode() {
+        return SecurityMode.SimPin;
     }
 }
 
