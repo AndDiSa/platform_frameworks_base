@@ -252,6 +252,7 @@ import dalvik.system.VMRuntime;
 import libcore.io.IoUtils;
 import libcore.util.EmptyArray;
 
+import static android.Manifest.permission.CONTROL_KEYGUARD;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.MANAGE_ACTIVITY_STACKS;
@@ -6841,6 +6842,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     @Override
     public void keyguardGoingAway(int flags) {
+        enforceCallingPermission(CONTROL_KEYGUARD, "keyguardGoingAway()");
         enforceNotIsolatedCaller("keyguardGoingAway");
         final long token = Binder.clearCallingIdentity();
         try {
