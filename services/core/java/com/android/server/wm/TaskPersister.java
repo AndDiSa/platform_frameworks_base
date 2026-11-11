@@ -377,7 +377,7 @@ public class TaskPersister implements PersisterQueue.Listener {
                     }
                     XmlUtils.skipCurrentTag(in);
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Slog.wtf(TAG, "Unable to parse " + taskFile + ". Error ", e);
                 Slog.e(TAG, "Failing file: " + fileToString(taskFile));
                 deleteFile = true;
