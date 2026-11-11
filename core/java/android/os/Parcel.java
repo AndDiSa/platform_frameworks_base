@@ -549,7 +549,6 @@ public final class Parcel {
      */
     public final void recycle() {
         if (DEBUG_RECYCLE) mStack = null;
-        mClassCookies = null;
         freeBuffer();
 
         if (mOwnsNativeParcelObject) {
@@ -5202,9 +5201,11 @@ public final class Parcel {
             nativeFreeBuffer(mNativePtr);
         }
         mReadWriteHelper = ReadWriteHelper.DEFAULT;
+        mClassCookies = null;
     }
 
-    private void destroy() {
+    /** @hide */
+    public void destroy() {
         resetSqaushingState();
         if (mNativePtr != 0) {
             if (mOwnsNativeParcelObject) {

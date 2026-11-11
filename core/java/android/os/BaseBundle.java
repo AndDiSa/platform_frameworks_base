@@ -458,7 +458,7 @@ public class BaseBundle {
 
             mMap = map;
             if (recycleParcel) {
-                recycleParcel(parcelledData);
+                parcelledData.recycle();
                 mWeakParcelledData = null;
             } else {
                 mWeakParcelledData = new WeakReference<>(parcelledData);
@@ -505,12 +505,6 @@ public class BaseBundle {
      */
     private static boolean isEmptyParcel(Parcel p) {
         return p == NoImagePreloadHolder.EMPTY_PARCEL;
-    }
-
-    private static void recycleParcel(Parcel p) {
-        if (p != null && !isEmptyParcel(p)) {
-            p.recycle();
-        }
     }
 
     /**
@@ -617,7 +611,10 @@ public class BaseBundle {
     public void clear() {
         unparcel();
         if (mOwnsLazyValues && mWeakParcelledData != null) {
-            recycleParcel(mWeakParcelledData.get());
+            Parcel parcel = mWeakParcelledData.get();
+            if (parcel != null) {
+                parcel.destroy();
+            }
             mWeakParcelledData = null;
         }
         mMap.clear();
