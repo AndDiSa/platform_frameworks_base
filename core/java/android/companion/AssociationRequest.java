@@ -225,6 +225,10 @@ public final class AssociationRequest implements Parcelable {
             @Nullable CharSequence displayName,
             boolean selfManaged,
             boolean forceConfirmation) {
+        if (displayName != null && displayName.length() > 1024) {
+            throw new IllegalArgumentException("Length of the display name must be at most "
+                    + "1024 characters");
+        }
         mSingleDevice = singleDevice;
         mDeviceFilters = requireNonNull(deviceFilters);
         mDeviceProfile = deviceProfile;
@@ -617,6 +621,10 @@ public final class AssociationRequest implements Parcelable {
         this.mDeviceProfile = deviceProfile;
         com.android.internal.util.AnnotationValidations.validate(
                 DeviceProfile.class, null, mDeviceProfile);
+        if (displayName != null && displayName.length() > 1024) {
+            throw new IllegalArgumentException("Length of the display name must be at most "
+                    + "1024 characters");
+        }
         this.mDisplayName = displayName;
         this.mSelfManaged = selfManaged;
         this.mForceConfirmation = forceConfirmation;
