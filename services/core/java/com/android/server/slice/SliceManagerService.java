@@ -339,6 +339,7 @@ public class SliceManagerService extends ISliceManager.Stub {
     @Override
     public void onShellCommand(FileDescriptor in, FileDescriptor out, FileDescriptor err,
             String[] args, ShellCallback callback, ResultReceiver resultReceiver) {
+        Binder.enforceShellCommandUid(resultReceiver);
         new SliceShellCommand(this).exec(this, in, out, err, args, callback, resultReceiver);
     }
 

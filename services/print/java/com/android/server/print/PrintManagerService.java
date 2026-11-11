@@ -134,6 +134,7 @@ public final class PrintManagerService extends SystemService {
         public void onShellCommand(FileDescriptor in, FileDescriptor out,
                 FileDescriptor err, String[] args, ShellCallback callback,
                 ResultReceiver resultReceiver) {
+            Binder.enforceShellCommandUid(resultReceiver);
             new PrintShellCommand(this).exec(this, in, out, err, args, callback, resultReceiver);
         }
 
